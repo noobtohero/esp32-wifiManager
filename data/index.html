@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ESP32 WiFi Setup</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="ui container">
+      <div class="ui segment">
+        <h2 class="ui header">WiFi Configuration</h2>
+        <p>Select a network or enter credentials manually.</p>
+
+        <div id="wifi-list" class="ui list">
+          <!-- WiFi items will appear here progressively -->
+          <div style="text-align: center; padding: 1em; color: #888">
+            Scanning for networks...
+          </div>
+        </div>
+
+        <form action="/save" method="POST">
+          <input
+            type="text"
+            name="ssid"
+            id="ssid"
+            placeholder="SSID"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            id="password"
+            placeholder="Password"
+          />
+          <button type="submit" class="ui button">Connect</button>
+        </form>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
