@@ -104,3 +104,4 @@ void setup() {
 
 ---
 พัฒนาโดย **Antigravity AI (Google Deepmind)** 🧬
+ควบคุม project โดย **NoobToHERO** 🛠️
