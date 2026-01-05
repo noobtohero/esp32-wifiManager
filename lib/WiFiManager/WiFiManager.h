@@ -1,6 +1,7 @@
 #ifndef WIFI_MANAGER_H
 #define WIFI_MANAGER_H
 
+#include "WM_Config.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
@@ -10,10 +11,7 @@
 #include <WiFi.h>
 #include <functional>
 
-// Fallback for boards that don't define LED_BUILTIN (Commonly pin 2 on ESP32)
-#ifndef LED_BUILTIN
-#define LED_BUILTIN 2
-#endif
+// Fallback for boards that don't define LED_BUILTIN (Managed in WM_Config.h)
 
 // Debug Macros
 #ifdef DEBUG_MODE
@@ -36,13 +34,18 @@ public:
   typedef std::function<void(bool)> ConnectionCallback;
 
   // Core API
-  bool begin(const char *apName = "ESP32-Portal",
-             const char *apPassword = nullptr);
+  bool begin(const char *apName = WM_DEFAULT_AP_NAME,
+             const char *apPassword = WM_DEFAULT_AP_PASSWORD);
   bool begin(const char *apName, SimpleCallback onConnect);
   void resetSettings();
 
-  // Status LED (Default to Pin 2 for ESP32 DevKits)
-  WiFiManager &setStatusLED(int pin = LED_BUILTIN, bool activeLow = false);
+  // Status LED
+  WiFiManager &setStatusLED(int pin = WM_DEFAULT_LED_PIN,
+                            bool activeLow = WM_DEFAULT_LED_INVERT);
+  WiFiManager &setLEDActiveTime(int ms) {
+    _ledPulseHold = ms;
+    return *this;
+  }
   bool isSleepEnabled() { return _sleepEnabled; }
 
   // Callbacks Setters (Fluent API)
@@ -109,11 +112,13 @@ private:
   bool _portalRunning = false;
   bool _sleepEnabled = true; // Default as set in constructor or begin
   bool _shouldRestart = false;
+  bool _isConnecting = false;
   TaskHandle_t _taskHandle = nullptr;
 
   int _ledPin = -1;
   bool _ledInvert = false;
-  const byte DNS_PORT = 53;
+  int _ledPulseHold = WM_LED_PULSE_HOLD; // Default active time (ms)
+  const byte DNS_PORT = WM_DNS_PORT;
 };
 
 extern WiFiManager wifiManager;

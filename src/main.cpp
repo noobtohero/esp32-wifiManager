@@ -10,7 +10,7 @@
 void setup() {
   Serial.begin(115200);
   delay(2000);
-  Serial.println("\n[SYSTEM] Booting...");
+  Serial.println("\n[APP] Booting...");
 
   // ท่าที่ "สั้นที่สุด" (One-Liner with Auto-LED)
   wifiManager
@@ -18,7 +18,7 @@ void setup() {
       .onSleepChange([](bool enabled) {
         Serial.printf("[APP] WiFi Sleep is now: %s\n", enabled ? "ON" : "OFF");
       })
-      .begin("ESP32-Smart-Portal",
+      .begin(WM_DEFAULT_AP_NAME,
              []() { Serial.println("เชื่อมต่อเน็ตสำเร็จแล้ว!"); });
 }
 
@@ -38,7 +38,7 @@ void loop() {
   static unsigned long lastTick = 0;
   if (millis() - lastTick > 5000) {
     lastTick = millis();
-    Serial.printf("[DEBUG] Tick: %lu | Free Heap: %u\n", millis(),
+    Serial.printf("[APP] Tick: %lu | Free Heap: %u\n", millis(),
                   ESP.getFreeHeap());
   }
 }

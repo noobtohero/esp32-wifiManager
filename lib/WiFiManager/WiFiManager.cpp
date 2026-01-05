@@ -20,8 +20,14 @@ bool WiFiManager::begin(const char *apName, SimpleCallback onConnect) {
 bool WiFiManager::begin(const char *apName, const char *apPassword) {
   _apName = apName;
   _apPassword = apPassword ? apPassword : "";
+  _isConnecting = true;
 
   WM_LOG("\n[WiFiManager] Starting...");
+
+  // Start FreeRTOS task early for background management (LED + Scan + DNS)
+  if (!_taskHandle) {
+    xTaskCreate(wifiTask, "wifi_task", 4096, this, 1, &_taskHandle);
+  }
 
   // 1. Initialize File System
   if (!LittleFS.begin(true)) {
@@ -63,6 +69,7 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
       if (WiFi.status() == WL_CONNECTED) {
         WM_LOG("\n[WiFiManager] Connected successfully!");
         WiFiManager::setSleep(true);
+        _isConnecting = false;
         if (_statusCallback)
           _statusCallback(CONNECTED);
         if (_connectedCb)
@@ -76,6 +83,7 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
   }
 
   // 4. Start Portal if all connections failed
+  _isConnecting = false;
   startAP();
   startPortal();
 
@@ -83,9 +91,6 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
     _statusCallback(PORTAL_START);
   if (_portalCb)
     _portalCb(); // Specialized Callback
-
-  // Start FreeRTOS task for background management (Scan + DNS)
-  xTaskCreate(wifiTask, "wifi_task", 4096, this, 1, &_taskHandle);
 
   if (_callback)
     _callback(false);
@@ -243,7 +248,7 @@ void WiFiManager::wifiTask(void *pvParameters) {
 
   TickType_t lastScanTime = 0;
   unsigned long apStartTime = millis();
-  const unsigned long AP_TIMEOUT = 300000; // 5 minutes timeout for Power Saving
+  const unsigned long AP_TIMEOUT = WM_AP_TIMEOUT; // From WM_Config.h
 
   while (true) {
     // Safe Restart Check
@@ -297,11 +302,13 @@ void WiFiManager::wifiTask(void *pvParameters) {
     if (!instance->_portalRunning && currentlyConnected != lastConnected) {
       lastConnected = currentlyConnected;
       if (currentlyConnected) {
+        instance->_isConnecting = false;
         if (instance->_statusCallback)
           instance->_statusCallback(CONNECTED);
         if (instance->_connectedCb)
           instance->_connectedCb();
       } else {
+        instance->_isConnecting = true;
         if (instance->_statusCallback)
           instance->_statusCallback(DISCONNECTED);
         if (instance->_disconnectedCb)
@@ -311,20 +318,27 @@ void WiFiManager::wifiTask(void *pvParameters) {
 
     // LED Pattern Management
     if (instance->_ledPin != -1) {
-      if (currentlyConnected) {
+      if (instance->_portalRunning) {
+        // โหมด Portal: ติดค้าง
+        digitalWrite(instance->_ledPin, instance->_ledInvert ? LOW : HIGH);
+      } else if (instance->_isConnecting) {
+        // กำลังหา/เชื่อมต่อ (จาก WM_Config.h)
+        unsigned long cyclePos = millis() % WM_LED_CONNECTING_INT;
+        bool shouldBeOn = (cyclePos < (unsigned long)instance->_ledPulseHold);
         digitalWrite(instance->_ledPin,
-                     instance->_ledInvert ? LOW : HIGH); // Solid ON
+                     instance->_ledInvert ? !shouldBeOn : shouldBeOn);
+      } else if (currentlyConnected) {
+        // เชื่อมต่อสำเร็จ:
+        // Sleep ON -> กระพริบช้ามาก, Sleep OFF -> กระพริบช้า (จาก WM_Config.h)
+        int interval =
+            instance->_sleepEnabled ? WM_LED_SLEEP_INT : WM_LED_CONNECTED_INT;
+        unsigned long cyclePos = millis() % interval;
+        bool shouldBeOn = (cyclePos < (unsigned long)instance->_ledPulseHold);
+        digitalWrite(instance->_ledPin,
+                     instance->_ledInvert ? !shouldBeOn : shouldBeOn);
       } else {
-        // Blink Pattern
-        int interval = instance->_portalRunning
-                           ? 150
-                           : 800; // Fast for Portal, Slow for Connecting
-        if (millis() - lastBlink > interval) {
-          lastBlink = millis();
-          ledState = !ledState;
-          digitalWrite(instance->_ledPin,
-                       instance->_ledInvert ? !ledState : ledState);
-        }
+        // Sleep / AP Timeout / Idle: ไฟดับ
+        digitalWrite(instance->_ledPin, instance->_ledInvert ? HIGH : LOW);
       }
     }
 
