@@ -47,6 +47,10 @@ public:
     _ledPulseHold = ms;
     return *this;
   }
+  WiFiManager &enableStatusLED(bool enable) {
+    _ledEnabled = enable;
+    return *this;
+  }
   bool isSleepEnabled() { return _sleepEnabled; }
 
   // Callbacks Setters (Fluent API)
@@ -115,6 +119,7 @@ private:
   SleepCallback _sleepCallback = nullptr;
 
   // State
+  bool _ledEnabled = true;
   String _apName;
   String _apPassword;
   bool _portalRunning = false;

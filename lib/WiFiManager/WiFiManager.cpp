@@ -387,7 +387,7 @@ void WiFiManager::wifiTask(void *pvParameters) {
     }
 
     // LED Pattern Management
-    if (instance->_ledPin != -1) {
+    if (instance->_ledPin != -1 && instance->_ledEnabled) {
       if (instance->_portalRunning) {
         // โหมด Portal: ติดค้าง
         digitalWrite(instance->_ledPin, instance->_ledInvert ? LOW : HIGH);
@@ -410,6 +410,9 @@ void WiFiManager::wifiTask(void *pvParameters) {
         // Sleep / AP Timeout / Idle: ไฟดับ
         digitalWrite(instance->_ledPin, instance->_ledInvert ? HIGH : LOW);
       }
+    } else if (instance->_ledPin != -1 && !instance->_ledEnabled) {
+      // Ensure LED is OFF if disabled during operation
+      digitalWrite(instance->_ledPin, instance->_ledInvert ? HIGH : LOW);
     }
 
     vTaskDelay(pdMS_TO_TICKS(50));
