@@ -92,8 +92,7 @@ void setup() {
   - **Connected (Normal):** กะพริบช้า ทุก 3 วินาที
   - **Connected (Sleep):** กะพริบช้ามาก ทุก 5 วินาที (Heartbeat)
   - **AP Timeout / Idle:** ไฟดับ
-- `setLEDActiveTime(ms)`: ตั้งค่าระยะเวลาที่ไฟติดในแต่ละ Pulse (Default: 200ms)
-- `setLEDActiveTime(int)`: ตั้งเวลาที่ไฟ LED สว่างค้างตอนกะพริบ (หน่วย ms)
+- `setLEDActiveTime(ms)`: ตั้งเวลาที่ไฟ LED สว่างค้างตอนกะพริบในทุกจังหวะ (Default: 200ms)
 - `enableStatusLED(bool)`: เปิด/ปิดการทำงานของไฟ LED สถานะ (เพื่อลดการตีกันกับ Library อื่น)
 - `onSleepChange(callback)`: ดักจับตอนโหมดประหยัดพลังงานเปลี่ยนสถานะ
 - `isSleepEnabled()`: เช็คสถานะปัจจุบันของโหมดประหยัดพลังงาน
