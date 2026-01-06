@@ -1,4 +1,4 @@
-# ESP32-WiFiManager-NTH (Plug-and-Play) 🚀
+# ESP32 WiFi Manager (Plug-and-Play) 🚀
 
 [English](#english) | [ภาษาไทย](#ภาษาไทย)
 
@@ -17,13 +17,13 @@ A WiFi management library for ESP32 designed to be **Easy to use (Eazy)**, **Fas
 - **Low Energy:** Automatic Modem Sleep and AP auto-shutdown when idle (AP Timeout).
 - **Non-blocking FreeRTOS:** Background WiFi management that doesn't freeze your main loop.
 
-### 🛠 Installation
+### 🛠 Installation (การติดตั้ง)
 
-Add this line to your `platformio.ini`:
+Add this line to your `platformio.ini`: (เพิ่มบรรทัดนี้ใน `platformio.ini` ของคุณ)
 
 ```ini
 lib_deps =
-    ESP32-WiFiManager-NTH
+    https://github.com/noobtohero/esp32-wifiManager.git
 ```
 
 **Zero-Config!** The library automatically handles all dependencies (AsyncWebServer, ArduinoJson) and embeds web assets into the binary.
@@ -125,7 +125,7 @@ To modify the Portal UI:
 
 ```ini
 lib_deps =
-    ESP32-WiFiManager-NTH
+    https://github.com/noobtohero/esp32-wifiManager.git
 ```
 
 **ไม่ต้องทำอะไรเพิ่ม!** ระบบจะจัดการ Lib อื่นๆ (AsyncWebServer, ArduinoJson) และหน้าเว็บให้คุณโดยอัตโนมัติ (Zero-Config)
