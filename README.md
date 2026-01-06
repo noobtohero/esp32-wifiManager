@@ -1,5 +1,7 @@
 # ESP32 WiFi Manager (Plug-and-Play) 🚀
 
+**Latest Release:** `v1.3.0` (Middleware Mode Support)
+
 [English](#english) | [ภาษาไทย](#ภาษาไทย)
 
 ---
