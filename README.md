@@ -17,9 +17,9 @@ A WiFi management library for ESP32 designed to be **Easy to use (Eazy)**, **Fas
 - **Low Energy:** Automatic Modem Sleep and AP auto-shutdown when idle (AP Timeout).
 - **Non-blocking FreeRTOS:** Background WiFi management that doesn't freeze your main loop.
 
-### 🛠 Installation (การติดตั้ง)
+### 🛠 Installation
 
-Add this line to your `platformio.ini`: (เพิ่มบรรทัดนี้ใน `platformio.ini` ของคุณ)
+Add this line to your `platformio.ini`:
 
 ```ini
 lib_deps =
