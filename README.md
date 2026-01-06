@@ -67,6 +67,29 @@ void setup() {
 }
 ```
 
+#### 3. 🔌 Middleware Mode (Shared Dashboard) - *Pro*
+
+If your project already has an `AsyncWebServer(80)`, use this to avoid Port 80 conflicts:
+
+```cpp
+AsyncWebServer server(80);
+
+void setup() {
+    // Register your dashboard
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", "Hello from Dashboard!");
+    });
+
+    // Let WiFiManager use your server
+    wifiManager.useServer(&server).begin("My-ESP32-AP");
+    
+    server.begin();
+}
+```
+
+> [!WARNING]
+> If you start your own WebServer on Port 80 **without** using `.useServer(&server)`, the Captive Portal will fail to start due to port conflict.
+
 ### ⚙️ Advanced Configuration
 
 Customize default settings in [WM_Config.h](file:///d:/esp32/esp32-wifiManager/lib/WiFiManager/WM_Config.h):
@@ -168,6 +191,29 @@ void setup() {
     wifiManager.onStatusChange(wifiStatusHandler).begin();
 }
 ```
+
+#### 3. 🔌 โหมด Middleware (ใช้งานร่วมกับ Dashboard) - *Pro*
+
+หากโปรเจกต์ของคุณมี `AsyncWebServer(80)` อยู่แล้ว ให้ใช้โหมดนี้เพื่อป้องกันพอร์ตชนกัน:
+
+```cpp
+AsyncWebServer server(80);
+
+void setup() {
+    // สร้างหน้า Dashboard ของคุณ
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", "สวัสดีจากหน้า Dashboard!");
+    });
+
+    // ให้ WiFiManager ไปใช้ Server ร่วมกับคุณ
+    wifiManager.useServer(&server).begin("My-ESP32-AP");
+    
+    server.begin();
+}
+```
+
+> [!WARNING]
+> หากคุณสร้าง WebServer เองบนพอร์ต 80 โดย **ไม่ใช้** คำสั่ง `.useServer(&server)` หน้าตั้งค่า WiFi (Portal) จะไม่สามารถทำงานได้เนื่องจากพอร์ตชนกันครับ
 
 ### ⚙️ การตั้งค่าระดับสูง (Advanced Configuration)
 

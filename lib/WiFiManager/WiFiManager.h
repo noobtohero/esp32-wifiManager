@@ -22,10 +22,17 @@
 #define WM_LOGF(x, ...)
 #endif
 
-class WiFiManager {
+class WiFiManager : public AsyncWebHandler {
 public:
   WiFiManager();
   ~WiFiManager();
+
+  // Middleware Mode
+  WiFiManager &useServer(AsyncWebServer *server);
+
+  // Required for AsyncWebHandler
+  bool canHandle(AsyncWebServerRequest *request) override;
+  void handleRequest(AsyncWebServerRequest *request) override;
 
   // Callbacks & Types
   enum WiFiState { CONNECTED, DISCONNECTED, PORTAL_START, PORTAL_TIMEOUT };
@@ -107,6 +114,7 @@ private:
 
   // Components
   AsyncWebServer _server;
+  AsyncWebServer *_userServer = nullptr;
   AsyncEventSource _events;
   DNSServer _dnsServer;
   ConnectionCallback _callback = nullptr;

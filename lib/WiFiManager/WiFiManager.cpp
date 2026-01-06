@@ -6,7 +6,6 @@
 #include <functional>
 #include <time.h>
 
-
 WiFiManager wifiManager;
 
 WiFiManager::WiFiManager()
@@ -128,28 +127,126 @@ void WiFiManager::startAP() {
   _dnsServer.start(DNS_PORT, "*", IP);
 }
 
+WiFiManager &WiFiManager::useServer(AsyncWebServer *server) {
+  _userServer = server;
+  return *this;
+}
+
+bool WiFiManager::canHandle(AsyncWebServerRequest *request) {
+  if (!_portalRunning)
+    return false;
+
+  // Intercept our specific routes
+  String url = request->url();
+  if (url == "/" || url == "/save" || url == "/events") {
+    return true;
+  }
+
+  // Captive Portal Redirect: Intercept everything else in AP mode
+  if (WiFi.getMode() & WIFI_AP) {
+    return true;
+  }
+
+  return false;
+}
+
+void WiFiManager::handleRequest(AsyncWebServerRequest *request) {
+  String url = request->url();
+
+  if (url == "/") {
+    request->send_P(200, "text/html", WM_HTML_INDEX);
+  } else if (url == "/save") {
+    // Save logic handled via routes or here?
+    // Handled in setupRoutes, but here for Middleware
+    if (request->method() == HTTP_POST) {
+      if (request->hasParam("ssid", true)) {
+        String s = request->getParam("ssid", true)->value();
+        String p = request->hasParam("password", true)
+                       ? request->getParam("password", true)->value()
+                       : "";
+
+        Preferences prefs;
+        prefs.begin("wifi-manager", false);
+        String networksJson = prefs.getString("networks", "[]");
+
+        JsonDocument doc;
+        deserializeJson(doc, networksJson);
+        JsonArray networks = doc.as<JsonArray>();
+
+        for (size_t i = 0; i < networks.size(); i++) {
+          if (networks[i]["ssid"] == s) {
+            networks.remove(i);
+            break;
+          }
+        }
+
+        JsonDocument newEntryDoc;
+        JsonObject newEntry = newEntryDoc.to<JsonObject>();
+        newEntry["ssid"] = s;
+        newEntry["pass"] = p;
+
+        JsonDocument finalDoc;
+        JsonArray finalArray = finalDoc.to<JsonArray>();
+        finalArray.add(newEntry);
+        for (JsonObject v : networks) {
+          if (finalArray.size() < 3)
+            finalArray.add(v);
+        }
+
+        String output;
+        serializeJson(finalDoc, output);
+        prefs.putString("networks", output);
+        prefs.end();
+
+        request->send(200, "text/plain", "OK");
+        _shouldRestart = true;
+      } else {
+        request->send(400, "text/plain", "Missing SSID");
+      }
+    }
+  } else if (url == "/events") {
+    // SSE handled by _events component, normally added as handler
+    // If we are here, something is wrong or we need to pass it
+    request->send(404);
+  } else {
+    // Captive Portal Redirect
+    request->redirect("/");
+  }
+}
+
 void WiFiManager::stopPortal() {
   if (_portalRunning) {
     _dnsServer.stop();
-    _server.end();
+    if (_userServer) {
+      _userServer->removeHandler(this);
+    } else {
+      _server.end();
+    }
     WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_STA);
     _portalRunning = false;
     if (_statusCallback)
       _statusCallback(PORTAL_TIMEOUT);
     if (_timeoutCb)
-      _timeoutCb(); // Specialized Callback
+      _timeoutCb();
     if (_connectedCb)
-      _connectedCb(); // Trigger connected if stopped after configuration
+      _connectedCb();
     WM_LOG("[WiFiManager] Portal & AP Stopped. Entering Low Power STA mode.");
-    WiFi.setSleep(true); // Ensure modem sleep is on
+    WiFi.setSleep(true);
   }
 }
 
 void WiFiManager::startPortal() {
-  setupRoutes();
-  _server.addHandler(&_events);
-  _server.begin();
+  if (_userServer) {
+    WM_LOG("[WiFiManager] Starting Portal in Middleware Mode...");
+    _userServer->addHandler(this);
+    _userServer->addHandler(&_events);
+  } else {
+    WM_LOG("[WiFiManager] Starting Portal in Standalone Mode...");
+    setupRoutes();
+    _server.addHandler(&_events);
+    _server.begin();
+  }
   _portalRunning = true;
 }
 
