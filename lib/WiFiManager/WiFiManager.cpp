@@ -24,7 +24,11 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
 
   WM_LOG("\n[WiFiManager] Starting...");
 
-  // Start FreeRTOS task early for background management (LED + Scan + DNS)
+  // Initialize Time Sync settings
+  initTime();
+
+  // Start FreeRTOS task early for background management (LED + Scan + DNS +
+  // Time)
   if (!_taskHandle) {
     xTaskCreate(wifiTask, "wifi_task", 4096, this, 1, &_taskHandle);
   }
@@ -164,6 +168,69 @@ void WiFiManager::setSleep(bool enable) {
           enable ? "ENABLED" : "DISABLED");
 }
 
+String WiFiManager::now() {
+  time_t now;
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo, 0)) {
+    return "";
+  }
+  char buf[25];
+  strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+  return String(buf);
+}
+
+String WiFiManager::date() {
+  time_t now;
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo, 0)) {
+    return "";
+  }
+  char buf[11];
+  strftime(buf, sizeof(buf), "%Y-%m-%d", &timeinfo);
+  return String(buf);
+}
+
+String WiFiManager::time() {
+  time_t now;
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo, 0)) {
+    return "";
+  }
+  char buf[9];
+  strftime(buf, sizeof(buf), "%H:%M:%S", &timeinfo);
+  return String(buf);
+}
+
+time_t WiFiManager::getTimestamp() {
+  time_t now;
+  ::time(&now);
+  return now;
+}
+
+bool WiFiManager::isTimeSynced() { return _timeSynced; }
+
+void WiFiManager::initTime() {
+  WM_LOG("[WiFiManager] Initializing Time Synchronization...");
+  configTzTime(WM_TIME_ZONE, WM_NTP_SERVER);
+  _lastTimeSync = millis();
+}
+
+void WiFiManager::checkTimeSync() {
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!_timeSynced || (millis() - _lastTimeSync > WM_TIME_SYNC_INTERVAL)) {
+      struct tm timeinfo;
+      if (getLocalTime(&timeinfo, 0)) {
+        if (!_timeSynced) {
+          WM_LOGF("[WiFiManager] Time Synced Successfully: %s\n",
+                  now().c_str());
+          _timeSynced = true;
+        }
+        _lastTimeSync = millis();
+      }
+    }
+  }
+}
+
 bool WiFiManager::isConnected() { return WiFi.status() == WL_CONNECTED; }
 
 String WiFiManager::getSSID() { return WiFi.SSID(); }
@@ -291,7 +358,10 @@ void WiFiManager::wifiTask(void *pvParameters) {
       WiFi.scanDelete();
     }
 
-    // 3. Monitor WiFi Status & LED Management
+    // 3. Background Time Sync
+    instance->checkTimeSync();
+
+    // 4. Monitor WiFi Status & LED Management
     static bool lastConnected = false;
     static unsigned long lastBlink = 0;
     static bool ledState = false;

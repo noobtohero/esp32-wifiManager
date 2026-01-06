@@ -38,7 +38,7 @@ void loop() {
   static unsigned long lastTick = 0;
   if (millis() - lastTick > 5000) {
     lastTick = millis();
-    Serial.printf("[APP] Tick: %lu | Free Heap: %u\n", millis(),
+    Serial.printf("[APP] Time: %s | Free Heap: %u\n", wifiManager.now().c_str(),
                   ESP.getFreeHeap());
   }
 }

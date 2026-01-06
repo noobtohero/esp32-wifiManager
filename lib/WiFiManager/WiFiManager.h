@@ -10,6 +10,7 @@
 #include <LittleFS.h>
 #include <WiFi.h>
 #include <functional>
+#include <time.h>
 
 // Fallback for boards that don't define LED_BUILTIN (Managed in WM_Config.h)
 
@@ -81,9 +82,16 @@ public:
   }
 
   // Status & Settings
+  void setSleep(bool enable);
   bool isConnected();
   String getSSID();
-  void setSleep(bool enable);
+
+  // Time Management
+  String now();
+  String date();
+  String time();
+  time_t getTimestamp();
+  bool isTimeSynced();
 
 private:
   // Internal methods
@@ -119,6 +127,12 @@ private:
   bool _ledInvert = false;
   int _ledPulseHold = WM_LED_PULSE_HOLD; // Default active time (ms)
   const byte DNS_PORT = WM_DNS_PORT;
+
+  // Time Sync Members
+  unsigned long _lastTimeSync = 0;
+  bool _timeSynced = false;
+  void initTime();
+  void checkTimeSync();
 };
 
 extern WiFiManager wifiManager;

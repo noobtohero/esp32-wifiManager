@@ -22,10 +22,16 @@
 
 // --- Timing & Intervals (ms) ---
 #define WM_LED_PULSE_HOLD 150 // Duration LED stays ON during pulse
-#define WM_LED_PORTAL_INTERVAL 150 // Rapid blink for Portal mode (not used with solid, but kept for ref)
+#define WM_LED_PORTAL_INTERVAL                                                 \
+  150 // Rapid blink for Portal mode (not used with solid, but kept for ref)
 #define WM_LED_CONNECTING_INT 500 // Fast pulse while connecting
 #define WM_LED_CONNECTED_INT 3000 // Slow pulse heartbeat
 #define WM_LED_SLEEP_INT 5000     // Very slow pulse for Low Power state
-#define WM_AP_TIMEOUT 300000  // 5 Minutes (Power saving)
+#define WM_AP_TIMEOUT 300000      // 5 Minutes (Power saving)
+
+// --- RTC & NTP Settings ---
+#define WM_NTP_SERVER "pool.ntp.org"
+#define WM_TIME_ZONE "ICT-7"          // Bangkok, Thailand (UTC+7)
+#define WM_TIME_SYNC_INTERVAL 3600000 // Resync every 1 hour (ms)
 
 #endif // WM_CONFIG_H

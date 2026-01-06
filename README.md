@@ -97,6 +97,11 @@ void setup() {
 - `isSleepEnabled()`: เช็คสถานะปัจจุบันของโหมดประหยัดพลังงาน
 - `setSleep(bool)`: เปิด/ปิดโหมดประหยัดพลังงาน (Modem Sleep) ด้วยคําสั่ง
 - `resetSettings()`: ล้างค่า WiFi ที่จำไว้ทั้งหมดและล้าง Preferences
+- `now()`: คืนค่า วันและเวลาปัจจุบัน (รูปแบบ "YYYY-MM-DD HH:mm:ss")
+- `date()`: คืนค่า วันที่ปัจจุบัน (รูปแบบ "YYYY-MM-DD")
+- `time()`: คืนค่า เวลาปัจจุบัน (รูปแบบ "HH:mm:ss")
+- `getTimestamp()`: คืนค่า Unix Timestamp
+- `isTimeSynced()`: เช็คว่ามีการซิงค์เวลากับ NTP สำเร็จแล้วหรือยัง
 
 ## ⚠️ ข้อควรระวัง
 
