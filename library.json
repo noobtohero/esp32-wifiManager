@@ -1,6 +1,6 @@
 {
-  "name": "WiFiManager",
-  "version": "1.0.0",
+  "name": "ESP32-WiFiManager-NTH",
+  "version": "1.2.0",
   "description": "Plug-and-play WiFi Manager for ESP32 with built-in Captive Portal, RTC Sync, and Non-blocking Task management.",
   "keywords": "esp32, wifi, manager, captive portal, rtc, ntp, non-blocking",
   "repository": {
