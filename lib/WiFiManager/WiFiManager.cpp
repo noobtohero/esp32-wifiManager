@@ -1,5 +1,11 @@
 #include "WiFiManager.h"
+#include "WebAssets.h"
+#include <ESPAsyncWebServer.h>
 #include <Preferences.h>
+#include <WiFi.h>
+#include <functional>
+#include <time.h>
+
 
 WiFiManager wifiManager;
 
@@ -33,10 +39,7 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
     xTaskCreate(wifiTask, "wifi_task", 4096, this, 1, &_taskHandle);
   }
 
-  // 1. Initialize File System
-  if (!LittleFS.begin(true)) {
-    WM_LOG("[WiFiManager] ERROR: LittleFS Mount Failed");
-  }
+  // 1. Initialize System (LittleFS removed for plug-and-play)
 
   // 2. Try Auto-connecting to Last 3 Networks
   Preferences prefs;
@@ -236,8 +239,10 @@ bool WiFiManager::isConnected() { return WiFi.status() == WL_CONNECTED; }
 String WiFiManager::getSSID() { return WiFi.SSID(); }
 
 void WiFiManager::setupRoutes() {
-  // Serve static files from LittleFS
-  _server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+  // Serve embedded index.html
+  _server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "text/html", WM_HTML_INDEX);
+  });
 
   // Save configuration
   _server.on("/save", HTTP_POST, [this](AsyncWebServerRequest *request) {
