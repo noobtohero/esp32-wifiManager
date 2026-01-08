@@ -1,0 +1,12 @@
+.pio
+.vscode
+.DS_Store
+*.swp
+*.bak
+*.tmp
+*.log
+lib/deps/
+node_modules/
+dist/
+build/
+.env

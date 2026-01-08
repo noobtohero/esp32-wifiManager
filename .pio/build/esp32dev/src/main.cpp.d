@@ -1,5 +1,5 @@
 .pio/build/esp32dev/src/main.cpp.o: src/main.cpp \
- lib/WiFiManager/WiFiManager.h lib/WiFiManager/WM_Config.h \
+ lib/WiFiManager/src/WiFiManager.h lib/WiFiManager/src/WM_Config.h \
  C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/freertos/FreeRTOS.h \
@@ -178,7 +178,6 @@
  .pio/libdeps/esp32dev/ESPAsyncWebServer/src/AsyncJson.h \
  .pio/libdeps/esp32dev/ESPAsyncWebServer/src/ChunkPrint.h \
  C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
- C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.h \
  C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFi.h \
  C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiType.h \
  C:/Users/NTH/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_wifi/include/esp_wifi_types.h \

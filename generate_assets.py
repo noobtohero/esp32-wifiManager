@@ -3,7 +3,7 @@ import os
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
-OUTPUT_FILE = os.path.join(BASE_DIR, 'lib', 'WiFiManager', 'WebAssets.h')
+OUTPUT_FILE = os.path.join(BASE_DIR, 'lib', 'WiFiManager', 'src', 'WebAssets.h')
 
 def generate_assets():
     print("🚀 Generating WebAssets.h from data folder...")
