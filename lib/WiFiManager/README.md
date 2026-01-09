@@ -56,6 +56,26 @@ void loop() {
 }
 ```
 
+### 🧠 Middleware Mode (Shared WebServer)
+
+If you have your own `WebServer` for a Dashboard or OTA, you can share the port 80 with WiFiManager. This saves RAM and prevents port conflicts.
+
+```cpp
+WebServer myServer(80);
+
+void setup() {
+    myServer.on("/hello", []() { myServer.send(200, "text/plain", "Hello!"); });
+
+    wifiManager
+        .useServer(&myServer) // Register your server
+        .begin("My-Device-Portal");
+    
+    myServer.begin();
+}
+```
+WiFiManager will automatically call `myServer.handleClient()` inside its FreeRTOS task, so you don't need to put it in your `loop()`.
+
+
 ---
 
 ## ภาษาไทย
@@ -104,3 +124,23 @@ void loop() {
     // โค้ดหลักของคุณทำงานได้ตามปกติที่นี่!
 }
 ```
+
+### 🧠 Middleware Mode (ใช้ WebServer ร่วมกับ Dashboard)
+
+หากคุณมี `WebServer` ส่วนตัวสำหรับทำ Dashboard หรือระบบ OTA คุณสามารถแชร์ Port 80 ร่วมกับ WiFiManager ได้ เพื่อประหยัด RAM และป้องกัน Port ชนกัน
+
+```cpp
+WebServer myServer(80);
+
+void setup() {
+    myServer.on("/hello", []() { myServer.send(200, "text/plain", "Hello!"); });
+
+    wifiManager
+        .useServer(&myServer) // ลงทะเบียน Server ของคุณ
+        .begin("My-Device-Portal");
+    
+    myServer.begin();
+}
+```
+WiFiManager จะเรียกคำสั่ง `myServer.handleClient()` ให้เองโดยอัตโนมัติภายใน FreeRTOS Task ของมัน ดังนั้นคุณไม่จำเป็นต้องใส่ไว้ใน `loop()` ของคุณครับ
+

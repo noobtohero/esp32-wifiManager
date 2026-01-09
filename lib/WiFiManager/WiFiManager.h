@@ -25,6 +25,7 @@ public:
 
   // Middleware Mode
   WiFiManager &useServer(WebServer *server);
+  WebServer *getServer() { return _userServer ? _userServer : &_server; }
 
   // Callbacks & Types
   enum WiFiState { CONNECTED, DISCONNECTED, PORTAL_START, PORTAL_TIMEOUT };

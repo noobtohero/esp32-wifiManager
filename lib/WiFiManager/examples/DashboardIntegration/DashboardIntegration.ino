@@ -2,7 +2,7 @@
  * Example: Dashboard Integration (Middleware Mode)
  *
  * This example demonstrates how to use WiFiManager as a middleware
- * with your own AsyncWebServer dashboard.
+ * with your own standard WebServer dashboard.
  * Both the WiFi Setup Portal and your Dashboard will run on Port 80.
  *
  * 1. WiFiManager handles SSID/Pass configuration when disconnected.
@@ -11,45 +11,50 @@
  * This file is for the Arduino IDE.
  */
 
-#include <Arduino.h>
-#include <ESPAsyncWebServer.h>
+#include <WebServer.h>
 #include <WiFiManager.h>
 
-// Create your own server instance
-AsyncWebServer server(80);
+
+// 1. Create your own server instance
+WebServer myServer(80);
 
 void setup() {
   Serial.begin(115200);
 
-  // 1. Setup your Dashboard Routes
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String html = "<h1>My Device Dashboard</h1>";
-    html += "<p>Current Time: " + wifiManager.now() + "</p>";
-    html += "<p><a href='/config_wifi'>Setup WiFi</a> (Direct Link) </p>";
-    request->send(200, "text/html", html);
+  // 2. Setup your Dashboard Routes
+  myServer.on("/", HTTP_GET, []() {
+    String html = "<html><body style='font-family:sans-serif; "
+                  "text-align:center; padding:50px;'>";
+    html += "<h1>🚀 My ESP32 Dashboard</h1>";
+    html += "<p>Current Time: <b>" + wifiManager.now() + "</b></p>";
+    html += "<hr>";
+    html += "<p>Device is healthy and connected.</p>";
+    html += "</body></html>";
+    myServer.send(200, "text/html", html);
   });
 
-  // Optional: Add a link to force the portal if needed
-  server.on("/config_wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "WiFi Portal is being forced...");
-    // wifiManager.startPortal(); // You could trigger this manually
-  });
-
-  // 2. Register your server with WiFiManager
-  // This makes WiFiManager act as a 'plugin' for your server
+  // 3. Register your server with WiFiManager
+  // This makes WiFiManager use YOUR server instance instead of starting its
+  // own.
   wifiManager
-      .setStatusLED()     // Use built-in LED
-      .useServer(&server) // <--- CRITICAL: Share the server
+      .setStatusLED()       // Use built-in LED
+      .useServer(&myServer) // <--- CRITICAL: Share the server instance
       .onConnected([]() {
-        Serial.println("Dashboard is now online at http://" +
+        Serial.println("[APP] Dashboard is now online at http://" +
                        WiFi.localIP().toString());
       })
       .begin("Config-My-Device");
 
-  // 3. Start your server
-  server.begin();
+  // 4. Start your server (Must be done after wifiManager.begin() or if you want
+  // it to run always) WiFiManager will call handleClient() internally in its
+  // FreeRTOS task.
+  myServer.begin();
 }
 
 void loop() {
-  // Nothing needed here, everything runs in FreeRTOS background tasks
+  // Main loop remains empty.
+  // WiFiManager's FreeRTOS task handles:
+  // - DNS Server
+  // - Web Server requests (myServer.handleClient())
+  // - WiFi Status & Reconnections
 }
