@@ -6,43 +6,79 @@ document.addEventListener("DOMContentLoaded", () => {
   // Clear placeholder when scan starts receiving data
   let firstReceive = true;
 
-  // Use Server-Sent Events to receive WiFi scan results progressively
-  const source = new EventSource("/events");
+  // --- UI Helpers ---
+  const scanningText = document.getElementById("scanning-text");
 
-  source.addEventListener("wifi-found", (e) => {
-    if (firstReceive) {
-      wifiList.innerHTML = "";
-      firstReceive = false;
+  // Refresh Button Logic
+  document.getElementById("refresh-btn").onclick = (e) => {
+    e.preventDefault();
+    // Clear List
+    wifiList.innerHTML =
+      '<div style="text-align: center; padding: 1em; color: #888"><span id="scanning-text">Scanning...</span></div>';
+    foundNetworks.clear();
+    firstReceive = true;
+  };
+
+  let scanDots = 0;
+  setInterval(() => {
+    if (document.getElementById("scanning-text")) {
+      scanDots = (scanDots + 1) % 4;
+      document.getElementById("scanning-text").innerText =
+        "Scanning" + ".".repeat(scanDots);
     }
+  }, 500);
 
-    const data = JSON.parse(e.data);
-    if (!foundNetworks.has(data.ssid)) {
-      foundNetworks.add(data.ssid);
+  // Use polling to receive WiFi scan results (Zero-Dependency)
+  const fetchWifi = async () => {
+    try {
+      const response = await fetch("/list");
+      const networks = await response.json();
 
-      const item = document.createElement("div");
-      item.className = "wifi-item";
-      item.innerHTML = `
-                <div>
-                    <span>${data.ssid}</span>
-                    <span style="font-size: 0.8em; color: #999;">${
-                      data.secure ? "🔒" : ""
-                    }</span>
-                </div>
-                <span class="signal-strength">${data.rssi} dBm</span>
-            `;
+      if (networks.length > 0 && firstReceive) {
+        // Remove scanning text
+        wifiList.innerHTML = "";
+        firstReceive = false;
+      }
 
-      item.onclick = () => {
-        ssidInput.value = data.ssid;
-        document.getElementById("password").focus();
-      };
+      networks.forEach((data) => {
+        if (!foundNetworks.has(data.ssid)) {
+          foundNetworks.add(data.ssid);
 
-      wifiList.appendChild(item);
+          const item = document.createElement("div");
+          item.className = "wifi-item";
+
+          // Determine Signal Icon/Text (Simple simulation)
+          let signalColor = "#21ba45"; // Green
+          if (data.rssi < -70) signalColor = "#fbbd08"; // Yellow
+          if (data.rssi < -85) signalColor = "#db2828"; // Red
+
+          item.innerHTML = `
+                        <div style="flex-grow: 1;">
+                            <div style="font-weight: bold;">${data.ssid}</div>
+                            <div style="font-size: 0.8em; color: #999;">
+                              ${data.secure === "true" ? "🔒 Secured" : "Open"}
+                            </div>
+                        </div>
+                        <div style="text-align: right; color:${signalColor}; font-weight: bold;">
+                            ${data.rssi} dBm
+                        </div>
+                    `;
+
+          item.onclick = () => {
+            ssidInput.value = data.ssid;
+            document.getElementById("password").focus();
+          };
+
+          wifiList.appendChild(item);
+        }
+      });
+    } catch (err) {
+      console.error("Fetch error", err);
     }
-  });
+  };
 
-  source.addEventListener("error", (e) => {
-    console.error("SSE connection error", e);
-  });
+  fetchWifi();
+  const pollInterval = setInterval(fetchWifi, 1500);
 
   // --- Confirmation UI Refactor ---
   const form = document.querySelector("form");
@@ -52,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const originalText = btn.innerHTML;
 
     btn.disabled = true;
-    btn.innerHTML = "Connecting...";
+    btn.innerHTML = "Verifying Credentials..."; // Change text to indicate testing
 
     const formData = new FormData(form);
     const params = new URLSearchParams();
@@ -67,28 +103,37 @@ document.addEventListener("DOMContentLoaded", () => {
         body: params,
       });
 
-      if (response.ok) {
-        btn.style.backgroundColor = "#21ba45"; // Fomantic Green
-        btn.innerHTML = "Saved! Restarting...";
-        // Show a friendly message
+      const result = await response.json(); // Expect JSON now
+
+      if (result.status === "connected") {
+        btn.style.backgroundColor = "#21ba45"; // Green
+        btn.innerHTML = "Success! Restarting...";
+        // Show Success UI
         document.querySelector(".ui.segment").innerHTML = `
-                    <h2 class="ui header" style="color: #21ba45">Success!</h2>
-                    <p>Device is restarting to connect to <b>${params.get(
-                      "ssid"
-                    )}</b>.</p>
-                    <p>Wait about 10 seconds, then reconnect your phone to your home WiFi.</p>
-                `;
+           <h2 class="ui header" style="color: #21ba45">Connected!</h2>
+           <p>Device is restarting to connect to <b style="color:#2185d0">${params.get(
+             "ssid"
+           )}</b>.</p>
+           <p>Please reconnect your phone to your home WiFi.</p>
+           <div class="ui active centered inline loader"></div>
+        `;
       } else {
-        throw new Error("Save failed");
+        throw new Error("Auth Failed");
       }
     } catch (err) {
+      // Handle Failure (Wrong Password)
       btn.disabled = false;
-      btn.style.backgroundColor = "#db2828"; // Fomantic Red
-      btn.innerHTML = "Error! Try Again";
+      btn.style.backgroundColor = "#db2828"; // Red
+      btn.innerHTML = "Failed! Check Password";
+
+      // Auto-revert button after 3s
       setTimeout(() => {
         btn.style.backgroundColor = "";
         btn.innerHTML = originalText;
       }, 3000);
+
+      // Show error message
+      alert("Connection Failed! Please check your password and try again.");
     }
   };
 });

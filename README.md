@@ -30,7 +30,7 @@ lib_deps =
 
 - **[lib/WiFiManager](lib/WiFiManager)**: The core library.
 - **[lib/WiFiManager/examples](lib/WiFiManager/examples)**: Usage examples for Arduino IDE & PlatformIO.
-- **[lib/WiFiManager/src/WM_Config.h](lib/WiFiManager/src/WM_Config.h)**: Global configuration.
+- **[lib/WiFiManager/WM_Config.h](lib/WiFiManager/WM_Config.h)**: Global configuration.
 
 For full documentation, please visit the [Library README](lib/WiFiManager/README.md).
 
@@ -58,9 +58,19 @@ lib_deps =
 
 - **[lib/WiFiManager](lib/WiFiManager)**: ตัว Library หลัก
 - **[lib/WiFiManager/examples](lib/WiFiManager/examples)**: ตัวอย่างการใช้งาน
-- **[lib/WiFiManager/src/WM_Config.h](lib/WiFiManager/src/WM_Config.h)**: ไฟล์ตั้งค่าระบบ
+- **[lib/WiFiManager/WM_Config.h](lib/WiFiManager/WM_Config.h)**: ไฟล์ตั้งค่าระบบ
 
 อ่านเอกสารฉบับเต็มได้ที่ [Library README](lib/WiFiManager/README.md)
+
+---
+
+### ⚠️ Note for Developers
+When editing frontend source files in the `data/` folder, you must run:
+`python generate_assets.py` 
+to update the embedded header file (`WebAssets.h`).
+
+---
+
 
 ---
 
