@@ -10,3 +10,4 @@ node_modules/
 dist/
 build/
 .env
+build_log*.txt
