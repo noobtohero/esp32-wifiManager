@@ -29,7 +29,7 @@ lib_deps =
 ### 📂 Structure
 
 - **[lib/WiFiManager](lib/WiFiManager)**: The core library.
-- **[lib/WiFiManager/examples](lib/WiFiManager/examples)**: Usage examples for Arduino IDE & PlatformIO.
+- **[lib/WiFiManager/examples](lib/WiFiManager/examples)**: Usage examples for Arduino IDE & PlatformIO (Basic, Dashboard, OTA).
 - **[lib/WiFiManager/WM_Config.h](lib/WiFiManager/WM_Config.h)**: Global configuration.
 
 For full documentation, please visit the [Library README](lib/WiFiManager/README.md).
