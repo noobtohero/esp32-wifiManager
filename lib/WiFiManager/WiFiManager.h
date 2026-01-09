@@ -88,6 +88,7 @@ public:
   void setSleep(bool enable);
   bool isConnected();
   String getSSID();
+  void wakeUp();
 
   // Time Management
   String now();
@@ -139,7 +140,6 @@ private:
   void checkTimeSync();
 
   // Advanced Configuration
-  void wakeUp();
 
   // Scanning State
   int _scanChannel = 0;
