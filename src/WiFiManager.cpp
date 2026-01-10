@@ -101,15 +101,27 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
   return false;
 }
 
-void WiFiManager::resetSettings() {
+void WiFiManager::resetSettings(bool restart) {
   Preferences prefs;
   prefs.begin("wifi-manager", false);
   prefs.clear();
   prefs.end();
-  WM_LOG("[WiFiManager] Settings reset. Restarting...");
-  delay(1000);
-  ESP.restart();
+
+  WiFi.disconnect(true, true); // Clear STA config from Core + NVS
+
+  if (restart) {
+    WM_LOG("[WiFiManager] Settings reset. Restarting...");
+    delay(1000);
+    ESP.restart();
+  } else {
+    WM_LOG("[WiFiManager] Settings reset. Entering Portal mode.");
+    _isConnecting = false;
+    startAP();
+    startPortal();
+  }
 }
+
+void WiFiManager::clearSettings() { resetSettings(false); }
 
 void WiFiManager::startAP() {
   WM_LOG("[WiFiManager] Configuring AP...");

@@ -37,7 +37,8 @@ public:
   bool begin(const char *apName = WM_DEFAULT_AP_NAME,
              const char *apPassword = WM_DEFAULT_AP_PASSWORD);
   bool begin(const char *apName, SimpleCallback onConnect);
-  void resetSettings();
+  void resetSettings(bool restart = true);
+  void clearSettings();
 
   // Status LED
   WiFiManager &setStatusLED(int pin = WM_DEFAULT_LED_PIN,

@@ -24,10 +24,18 @@ lib_deps =
 wifiManager.begin("My-ESP32-Setup", "12345678");
 ```
 
-#### `resetSettings()`
-ใช้ล้างข้อมูล WiFi ที่เคยบันทึกไว้ทั้งหมด (เครื่องจะรีสตาร์ทด้วย)
+#### `resetSettings(restart)`
+ใช้ล้างข้อมูล WiFi ที่เคยบันทึกไว้ทั้งหมด
+*   **restart:** (ค่าเริ่มต้น: true) กำหนดว่าจะให้เครื่องรีสตาร์ทด้วยหรือไม่
+
 ```cpp
-wifiManager.resetSettings();
+wifiManager.resetSettings(true); // ล้างค่าและรีสตาร์ท
+```
+
+#### `clearSettings()`
+ล้างข้อมูล WiFi และเข้าโหมด Portal ทันที **โดยไม่รีสตาร์ทเครื่อง**
+```cpp
+wifiManager.clearSettings(); 
 ```
 
 #### `isConnected()`
