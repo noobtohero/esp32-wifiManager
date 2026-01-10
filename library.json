@@ -14,10 +14,5 @@
     }
   ],
   "frameworks": "arduino",
-  "platforms": "espressif32",
-  "dependencies": {
-    "ESP32Async/ESPAsyncWebServer": "https://github.com/ESP32Async/ESPAsyncWebServer.git",
-    "ESP32Async/AsyncTCP": "https://github.com/ESP32Async/AsyncTCP.git",
-    "bblanchon/ArduinoJson": "^7.0.0"
-  }
+  "platforms": "espressif32"
 }
