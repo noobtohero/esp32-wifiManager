@@ -1,16 +1,31 @@
 # ESP32 WiFi Manager (Plug-and-Play) 🚀
 
-**Latest Release:** `v1.3.0` (Middleware Mode Support)
+**Latest Release:** `v0.1.0` (Initial Stable Release)
 
 A high-performance, non-blocking WiFi Manager for ESP32.
 
-[English](#english) | [ภาษาไทย](#ภาษาไทย)
+[English](#english) | [ภาษาไทย](#ภาษาไทย) | [**คู่มือสำหรับมือใหม่ (Thai Guide)**](GUIDE_TH.md)
 
 ---
 
 ## English
 
 A WiFi management library for ESP32 designed to be **Easy to use**, **Fast**, **Low Energy**, and **Non-blocking**, powered by FreeRTOS.
+
+### ✨ Features
+
+- **⚡ Instant Feedback Flow:** Tests credentials *before* restarting. No more reboot loops for wrong passwords!
+- **📶 Multi-SSID Storage:** Remembers the last 3 connected networks and auto-connects to the available one.
+- **📱 Modern Captive Portal:** 
+    - Auto-redirect (iOS/Android/Windows).
+    - Responsive UI with Semantic UI.
+    - Signal Strength Icons and Security Indicators.
+    - "Scanning..." animations and manual Refresh button.
+- **🔄 Non-blocking Async Scan:** Fast, background WiFi scanning without freezing the device loop.
+- **🛠 Zero-Dependency Frontend:** All HTML/CSS/JS assets are embedded into headers. No external LittleFS upload required.
+- **🔌 Plug-and-Play:** Simple API with `wifiManager.begin()`.
+- **🔋 Low Energy:** Integrated Modem Sleep and AP Timeout mechanism.
+- **🕒 RTC Sync:** Automatic NTP time synchronization.
 
 ### 🛠 Installation
 
@@ -26,19 +41,69 @@ lib_deps =
 2. In Arduino IDE, go to **Sketch** -> **Include Library** -> **Add .ZIP Library...**.
 3. Select the downloaded file.
 
-### 📂 Structure
+### 🔧 Technical Details
 
-- **[lib/WiFiManager](lib/WiFiManager)**: The core library.
-- **[lib/WiFiManager/examples](lib/WiFiManager/examples)**: Usage examples for Arduino IDE & PlatformIO (Basic, Dashboard, OTA).
-- **[lib/WiFiManager/WM_Config.h](lib/WiFiManager/WM_Config.h)**: Global configuration.
+- **Filesystem:** Embedded Assets (generated via `generate_assets.py` from `data/` folder).
+- **Core:** Runs on a dedicated FreeRTOS task.
+- **Networking:**
+    - Uses `WIFI_AP_STA` mode to allow simultaneous AP + Scanning.
+    - **DHCP/DNS:** Forces IP `192.168.4.1` to ensure reliable Captive Portal redirection on all devices.
+- **Configuration:** Centralized in `src/WM_Config.h`.
 
-For full documentation, please visit the [Library README](lib/WiFiManager/README.md).
+### 📖 Quick Start
+
+```cpp
+#include <WiFiManager.h>
+
+void setup() {
+    // Configures AP Name & Optional Password
+    wifiManager
+        .setStatusLED() // Optional: use built-in LED
+        .begin("My-ESP32-Portal");
+}
+
+void loop() {
+    // Main code runs smoothly here!
+}
+```
+
+### 🧠 Middleware Mode (Shared WebServer)
+
+If you have your own `WebServer` for a Dashboard or OTA, you can share the port 80 with WiFiManager. This saves RAM and prevents port conflicts.
+
+```cpp
+WebServer myServer(80);
+
+void setup() {
+    myServer.on("/hello", []() { myServer.send(200, "text/plain", "Hello!"); });
+
+    wifiManager
+        .useServer(&myServer) // Register your server
+        .begin("My-Device-Portal");
+    
+    myServer.begin();
+}
+```
+WiFiManager will automatically call `myServer.handleClient()` inside its FreeRTOS task, so you don't need to put it in your `loop()`.
 
 ---
 
 ## ภาษาไทย
 
-ไลบรารีจัดการ WiFi สำหรับ ESP32 ที่ออกแบบมาให้ **ใช้งานง่าย**, **รวดเร็ว**, **ประหยัดพลังงาน** และ **ไม่บล็อกการทำงานหลัก**
+ไลบรารีจัดการ WiFi สำหรับ ESP32 ที่ออกแบบมาให้ **ใช้งานง่าย**, **รวดเร็ว**, **ประหยัดพลังงาน** และ **ไม่บล็อกการทำงานหลัก** โดยใช้ความช่วยเหลือจาก FreeRTOS
+
+### ✨ คุณสมบัติเด่น
+
+- **⚡ Instant Feedback:** ทดสอบการเชื่อมต่อ WiFi ทันทีที่กดปุ่ม Save รู้ผล Success/Fail ได้เลยโดย **ไม่ต้องรอรีบูตเครื่อง**
+- **📶 เก็บชื่อ WiFi ได้ 3 ชื่อ:** ระบบจะจำ 3 ชื่อล่าสุดที่เคยต่อได้ และวนเช็ค Auto-connect ให้เองตามลำดับ
+- **📱 หน้าเว็บทันสมัย:**
+    - เด้งเข้าหน้าตั้งค่าอัตโนมัติ (Captive Portal)
+    - UI สวยงาม มีบอกระดับสัญญาณ (Signal Strength) และแม่กุญแจบอกความปลอดภัย
+    - มีปุ่ม Refresh และ Animation บอกสถานะการสแกน
+- **🔄 สแกนไว ไม่ค้าง:** ใช้ระบบ Async Scan ทำงานเบื้องหลัง ไม่บล็อกการทำงานหลักของบอร์ด
+- **🛠 ไม่ต้องอัพโหลดไฟล์:** ไฟล์เว็บทั้งหมดถูกแปลงเป็น Header ฝังใน Code แล้ว แฟลชปุ๊บใช้ได้ปั๊บ
+- **🔋 ประหยัดพลังงาน:** ปิด AP อัตโนมัติเมื่อไม่มีการใช้งาน (Timeout)
+- **🕒 ตั้งเวลาอัตโนมัติ:** ดึงเวลาจากเน็ต (NTP) ให้เองเมื่อต่อติด
 
 ### 🛠 การติดตั้ง (Installation)
 
@@ -54,13 +119,49 @@ lib_deps =
 2. ไปที่เมนู **Sketch** -> **Include Library** -> **Add .ZIP Library...**
 3. เลือกไฟล์ที่ดาวน์โหลดมา
 
-### 📂 โครงสร้างโปรเจกต์
+### 🔧 ข้อมูลทางเทคนิค
 
-- **[lib/WiFiManager](lib/WiFiManager)**: ตัว Library หลัก
-- **[lib/WiFiManager/examples](lib/WiFiManager/examples)**: ตัวอย่างการใช้งาน
-- **[lib/WiFiManager/WM_Config.h](lib/WiFiManager/WM_Config.h)**: ไฟล์ตั้งค่าระบบ
+- **Filesystem:** ไม่ต้องใช้ SPIFFS/LittleFS แยก (ใช้ Asset Embedding)
+- **Core:** ทำงานแยก Thread ด้วย FreeRTOS Task
+- **Networking:**
+    - ใช้โหมด `WIFI_AP_STA` ทำให้ปล่อย Hotspot ไปด้วย และสแกน WiFi ไปด้วยได้
+    - **DHCP/DNS:** บังคับ IP `192.168.4.1` เพื่อแก้ปัญหา Android/iOS บางรุ่นไม่เด้งหน้า Portal
+- **Configuration:** ปรับแต่งค่าต่างๆ ได้ง่ายๆ ที่ไฟล์ `src/WM_Config.h`
 
-อ่านเอกสารฉบับเต็มได้ที่ [Library README](lib/WiFiManager/README.md)
+### 📖 เริ่มต้นใช้งาน
+
+```cpp
+#include <WiFiManager.h>
+
+void setup() {
+    wifiManager
+        .setStatusLED() // เลือกใช้ไฟ LED บนบอร์ดบอกสถานะ
+        .begin("ESP32-Smart-Portal"); // ชื่อ WiFi ที่จะปล่อย
+}
+
+void loop() {
+    // โค้ดหลักของคุณทำงานได้ตามปกติที่นี่!
+}
+```
+
+### 🧠 Middleware Mode (ใช้ WebServer ร่วมกับ Dashboard)
+
+หากคุณมี `WebServer` ส่วนตัวสำหรับทำ Dashboard หรือระบบ OTA คุณสามารถแชร์ Port 80 ร่วมกับ WiFiManager ได้ เพื่อประหยัด RAM และป้องกัน Port ชนกัน
+
+```cpp
+WebServer myServer(80);
+
+void setup() {
+    myServer.on("/hello", []() { myServer.send(200, "text/plain", "Hello!"); });
+
+    wifiManager
+        .useServer(&myServer) // ลงทะเบียน Server ของคุณ
+        .begin("My-Device-Portal");
+    
+    myServer.begin();
+}
+```
+WiFiManager จะเรียกคำสั่ง `myServer.handleClient()` ให้เองโดยอัตโนมัติภายใน FreeRTOS Task ของมัน ดังนั้นคุณไม่จำเป็นต้องใส่ไว้ใน `loop()` ของคุณครับ
 
 ---
 
@@ -68,9 +169,6 @@ lib_deps =
 When editing frontend source files in the `data/` folder, you must run:
 `python generate_assets.py` 
 to update the embedded header file (`WebAssets.h`).
-
----
-
 
 ---
 
