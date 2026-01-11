@@ -126,6 +126,7 @@ private:
   bool _portalRunning = false;
   bool _sleepEnabled = true; // Default as set in constructor or begin
   bool _shouldRestart = false;
+  bool _shouldStopPortal = false;
   bool _isConnecting = false;
   TaskHandle_t _taskHandle = nullptr;
 

@@ -1,6 +1,6 @@
 # ESP32 WiFi Manager (Plug-and-Play) 🚀
 
-**Latest Release:** `v0.1.0` (Initial Stable Release)
+**Latest Release:** `v0.2.0` (Smart Retry & Non-Blocking Workflow)
 
 A high-performance, non-blocking WiFi Manager for ESP32.
 
@@ -14,17 +14,11 @@ A WiFi management library for ESP32 designed to be **Easy to use**, **Fast**, **
 
 ### ✨ Features
 
-- **⚡ Instant Feedback Flow:** Tests credentials *before* restarting. No more reboot loops for wrong passwords!
-- **📶 Multi-SSID Storage:** Remembers the last 3 connected networks and auto-connects to the available one.
-- **📱 Modern Captive Portal:** 
-    - Auto-redirect (iOS/Android/Windows).
-    - Responsive UI with Semantic UI.
-    - Signal Strength Icons and Security Indicators.
-    - "Scanning..." animations and manual Refresh button.
-- **🔄 Non-blocking Async Scan:** Fast, background WiFi scanning without freezing the device loop.
-- **🛠 Zero-Dependency Frontend:** All HTML/CSS/JS assets are embedded into headers. No external LittleFS upload required.
-- **🔌 Plug-and-Play:** Simple API with `wifiManager.begin()`.
-- **🔋 Low Energy:** Integrated Modem Sleep and AP Timeout mechanism.
+- **🛡️ Smart Retry System:** 
+    - **Multi-Pass Boot Retry:** Persistent connection attempts with rest periods to bypass "Association refused" errors.
+    - **Intelligent Backoff:** Cooldown delays between retries to improve router compatibility.
+- **🔄 No-Reboot Flow:** Connect to WiFi and close the portal gracefully without restarting the device.
+- **🧹 Auto-Deduplication:** Automatically removes duplicate SSIDs and shifts unique networks to prioritize the most recent ones.
 - **🕒 RTC Sync:** Automatic NTP time synchronization.
 
 ### 🛠 Installation
@@ -93,16 +87,12 @@ WiFiManager will automatically call `myServer.handleClient()` inside its FreeRTO
 ไลบรารีจัดการ WiFi สำหรับ ESP32 ที่ออกแบบมาให้ **ใช้งานง่าย**, **รวดเร็ว**, **ประหยัดพลังงาน** และ **ไม่บล็อกการทำงานหลัก** โดยใช้ความช่วยเหลือจาก FreeRTOS
 
 ### ✨ คุณสมบัติเด่น
-
-- **⚡ Instant Feedback:** ทดสอบการเชื่อมต่อ WiFi ทันทีที่กดปุ่ม Save รู้ผล Success/Fail ได้เลยโดย **ไม่ต้องรอรีบูตเครื่อง**
-- **📶 เก็บชื่อ WiFi ได้ 3 ชื่อ:** ระบบจะจำ 3 ชื่อล่าสุดที่เคยต่อได้ และวนเช็ค Auto-connect ให้เองตามลำดับ
-- **📱 หน้าเว็บทันสมัย:**
-    - เด้งเข้าหน้าตั้งค่าอัตโนมัติ (Captive Portal)
-    - UI สวยงาม มีบอกระดับสัญญาณ (Signal Strength) และแม่กุญแจบอกความปลอดภัย
-    - มีปุ่ม Refresh และ Animation บอกสถานะการสแกน
-- **🔄 สแกนไว ไม่ค้าง:** ใช้ระบบ Async Scan ทำงานเบื้องหลัง ไม่บล็อกการทำงานหลักของบอร์ด
-- **🛠 ไม่ต้องอัพโหลดไฟล์:** ไฟล์เว็บทั้งหมดถูกแปลงเป็น Header ฝังใน Code แล้ว แฟลชปุ๊บใช้ได้ปั๊บ
-- **🔋 ประหยัดพลังงาน:** ปิด AP อัตโนมัติเมื่อไม่มีการใช้งาน (Timeout)
+- **⚡ Instant Feedback Flow:** Tests credentials *before* restarting. No more reboot loops for wrong passwords!
+- **🛡️ ระบบ Smart Retry:** 
+    - **Multi-Pass Retry:** พยายามเชื่อมต่อแบบวนรอบและมีช่วงพักตัว (Rest) เพื่อสู้กับอาการ Router ปฏิเสธการเชื่อมต่อ (Association refused)
+    - **Intelligent Cooldown:** ระบบรอจังหวะที่เหมาะสมอัตโนมัติ ช่วยให้เกาะสัญญาณติดง่ายขึ้น
+- **🔄 No-Reboot Flow:** เชื่อมต่อและสลับโหมดการทำงานได้ทันทีโดย **ไม่ต้องรีสตาร์ทเครื่อง** โปรแกรมทำงานต่อเนื่องได้ไม่สะดุด
+- **🧹 ล้างชื่อซ้ำอัตโนมัติ:** ระบบจัดการ NVS อัจฉริยะ ลบ SSID ที่ซ้ำกันและจัดลำดับความสำคัญของเครือข่ายล่าสุดให้เอง
 - **🕒 ตั้งเวลาอัตโนมัติ:** ดึงเวลาจากเน็ต (NTP) ให้เองเมื่อต่อติด
 
 ### 🛠 การติดตั้ง (Installation)

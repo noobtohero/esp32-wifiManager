@@ -34,53 +34,78 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
     xTaskCreate(wifiTask, "wifi_task", 4096, this, 1, &_taskHandle);
   }
 
-  // Try Auto-connecting to Last 3 Networks (Stored as separate keys)
+  // Try Auto-connecting to Last 3 Networks (Multi-Pass Retry)
   Preferences prefs;
-  prefs.begin("wifi-manager", true); // Read-only
+  int bootRetries = 0;
+  String lastFailedSsid = "";
 
-  for (int i = 0; i < 3; i++) {
-    String keySsid = "s" + String(i);
-    String keyPass = "p" + String(i);
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
 
-    if (prefs.isKey(keySsid.c_str())) {
-      String ssid = prefs.getString(keySsid.c_str(), "");
-      String pass = prefs.getString(keyPass.c_str(), "");
+  while (bootRetries < WM_MAX_BOOT_RETRIES) {
+    if (bootRetries > 0) {
+      WM_LOGF("\n[WiFiManager] Boot Retry %d/%d in %d ms...\n", bootRetries + 1,
+              WM_MAX_BOOT_RETRIES, WM_BOOT_RETRY_DELAY_MS);
+      vTaskDelay(pdMS_TO_TICKS(WM_BOOT_RETRY_DELAY_MS));
+    }
 
-      if (ssid.length() > 0) {
-        WiFi.mode(WIFI_STA);
-        WM_LOGF("[WiFiManager] Trying network %d: %s\n", i, ssid.c_str());
-        WiFi.begin(ssid.c_str(), pass.c_str());
+    prefs.begin("wifi-manager", true); // Read-only
+    for (int i = 0; i < 3; i++) {
+      String keySsid = "s" + String(i);
+      String keyPass = "p" + String(i);
 
-        unsigned long startAttemptTime = millis();
-        while (millis() - startAttemptTime < 10000) {
-          if (WiFi.status() == WL_CONNECTED)
-            break;
+      if (prefs.isKey(keySsid.c_str())) {
+        String ssid = prefs.getString(keySsid.c_str(), "");
+        String pass = prefs.getString(keyPass.c_str(), "");
+
+        if (ssid.length() > 0) {
+          if (ssid == lastFailedSsid && bootRetries == 0) {
+            WM_LOGF("[WiFiManager] Skipping redundant attempt to %s\n",
+                    ssid.c_str());
+            continue; // Skip only on first pass if redundant
+          }
+
+          WM_LOGF("[WiFiManager] Trying network %d: %s\n", i, ssid.c_str());
+          WiFi.disconnect();
           vTaskDelay(pdMS_TO_TICKS(500));
-          WM_LOGF(".");
+          WiFi.begin(ssid.c_str(), pass.c_str());
+
+          unsigned long startAttemptTime = millis();
+          while (millis() - startAttemptTime < WM_CONNECT_TIMEOUT_MS) {
+            if (WiFi.status() == WL_CONNECTED)
+              break;
+            vTaskDelay(pdMS_TO_TICKS(500));
+            WM_LOGF(".");
+          }
+
+          if (WiFi.status() == WL_CONNECTED) {
+            WM_LOG("\n[WiFiManager] Connected successfully!");
+            _isConnecting = false;
+            this->setSleep(true);
+
+            prefs.end();
+            prefs.begin("wifi-manager", false);
+            prefs.remove("conn_error");
+            prefs.end();
+
+            if (_statusCallback)
+              _statusCallback(CONNECTED);
+            if (_connectedCb)
+              _connectedCb();
+            if (_callback)
+              _callback(true);
+            return true;
+          }
+
+          WM_LOG("\n[WiFiManager] Failed to connect to " + ssid);
+          lastFailedSsid = ssid;
+          vTaskDelay(pdMS_TO_TICKS(WM_CONNECT_COOLDOWN_MS));
         }
-
-        if (WiFi.status() == WL_CONNECTED) {
-          WM_LOG("\n[WiFiManager] Connected successfully!");
-          this->setSleep(true);
-          _isConnecting = false;
-
-          // Clear Error Flag
-          prefs.remove("conn_error");
-          prefs.end();
-
-          if (_statusCallback)
-            _statusCallback(CONNECTED);
-          if (_connectedCb)
-            _connectedCb();
-          if (_callback)
-            _callback(true);
-          return true;
-        }
-        WM_LOG("\n[WiFiManager] Failed to connect to " + ssid);
       }
     }
+    prefs.end();
+    bootRetries++;
   }
-  prefs.end();
 
   _isConnecting = false;
   startAP();
@@ -287,8 +312,19 @@ bool WiFiManager::isConnected() { return WiFi.status() == WL_CONNECTED; }
 String WiFiManager::getSSID() { return WiFi.SSID(); }
 
 void WiFiManager::setupRoutes() {
-  _server.on("/", HTTP_GET,
-             [this]() { _server.send(200, "text/html", WM_HTML_INDEX); });
+  _server.on("/", HTTP_GET, [this]() {
+    String host = _server.hostHeader();
+    String ip = WiFi.softAPIP().toString();
+    // Redirect to IP if accessing via fake domain (Captive Portal)
+    if (host.length() > 0 && host != ip && host != (ip + ":80")) {
+      WM_LOGF("[WebServer] Redirecting Host %s to IP %s\n", host.c_str(),
+              ip.c_str());
+      _server.sendHeader("Location", "http://" + ip + "/", true);
+      _server.send(302, "text/plain", "");
+      return;
+    }
+    _server.send(200, "text/html", WM_HTML_INDEX);
+  });
 
   _server.on("/save", HTTP_POST, [this]() {
     if (_server.hasArg("ssid")) {
@@ -298,26 +334,27 @@ void WiFiManager::setupRoutes() {
       // --- Verify Credentials (Instant Feedback) ---
       WM_LOGF("[WiFiManager] Testing connection to: %s\n", s.c_str());
 
-      // Keep AP alive, but connect STA
+      // Start connection attempt (Clean start)
+      WiFi.disconnect();
+      vTaskDelay(pdMS_TO_TICKS(500));
       WiFi.begin(s.c_str(), p.c_str());
 
+      // Instead of blocked loop with recursive handleClient (which causes
+      // crashes), we use a safe wait with yield.
       unsigned long startAttempt = millis();
       bool connected = false;
 
-      // Wait up to 15 seconds
       WM_LOG("[WiFiManager] Waiting for connection result...");
-      while (millis() - startAttempt < 15000) {
+      while (millis() - startAttempt <
+             WM_CONNECT_TIMEOUT_MS) { // Use config variable
         if (WiFi.status() == WL_CONNECTED) {
           WM_LOG("[WiFiManager] Connection Successful!");
           connected = true;
           break;
         }
-        // Keep Server Alive!
-        _server.handleClient();
-        if (_userServer)
-          _userServer->handleClient();
-        _dnsServer.processNextRequest();
-        yield();
+        vTaskDelay(pdMS_TO_TICKS(100)); // Non-blocking delay for FreeRTOS
+        if (WiFi.status() == WL_CONNECT_FAILED)
+          break;
       }
 
       if (connected) {
@@ -325,30 +362,45 @@ void WiFiManager::setupRoutes() {
         Preferences prefs;
         prefs.begin("wifi-manager", false);
 
-        // Shift networks (1->2, 0->1)
-        for (int i = 1; i >= 0; i--) {
+        // Deduplicate and Shift
+        struct WifiCreds {
+          String s;
+          String p;
+        };
+        WifiCreds list[3];
+        int count = 0;
+
+        // 1. Load current unique networks (excluding the one we just connected
+        // to)
+        for (int i = 0; i < 3; i++) {
           String keyS = "s" + String(i);
           String keyP = "p" + String(i);
+
           if (prefs.isKey(keyS.c_str())) {
-            String ssid = prefs.getString(keyS.c_str(), "");
-            String pass = prefs.getString(keyP.c_str(), "");
-            if (ssid.length() > 0) {
-              prefs.putString(("s" + String(i + 1)).c_str(), ssid.c_str());
-              prefs.putString(("p" + String(i + 1)).c_str(), pass.c_str());
+            String curS = prefs.getString(keyS.c_str(), "");
+            String curP = prefs.getString(keyP.c_str(), "");
+            // Only add if it's not empty AND not the same as our new success
+            // SSID
+            if (curS.length() > 0 && curS != s && count < 2) {
+              list[count++] = {curS, curP};
             }
           }
         }
 
-        // Save New
+        // 2. Save "New" at Slot 0, and shifted ones after
         prefs.putString("s0", s.c_str());
         prefs.putString("p0", p.c_str());
+        for (int i = 0; i < count; i++) {
+          prefs.putString(("s" + String(i + 1)).c_str(), list[i].s.c_str());
+          prefs.putString(("p" + String(i + 1)).c_str(), list[i].p.c_str());
+        }
 
         // Clear any previous error
         prefs.remove("conn_error");
         prefs.end();
 
         _server.send(200, "application/json", "{\"status\":\"connected\"}");
-        _shouldRestart = true;
+        _shouldStopPortal = true;
       } else {
         // Failed! Do NOT save, Do NOT restart
         WM_LOG("[WiFiManager] Connection Failed! Wrong password?");
@@ -361,7 +413,8 @@ void WiFiManager::setupRoutes() {
   });
 
   _server.on("/hotspot-detect.html", HTTP_GET, [this]() {
-    _server.sendHeader("Location", "/", true);
+    String ip = WiFi.softAPIP().toString();
+    _server.sendHeader("Location", "http://" + ip + "/", true);
     _server.send(302, "text/plain", "");
   });
 
@@ -379,19 +432,28 @@ void WiFiManager::setupRoutes() {
   _server.on("/success.txt", HTTP_GET,
              [this]() { _server.send(200, "text/plain", "success"); });
   _server.on("/ncsi.txt", HTTP_GET, [this]() {
-    _server.sendHeader("Location", "/", true);
+    String ip = WiFi.softAPIP().toString();
+    _server.sendHeader("Location", "http://" + ip + "/", true);
+    _server.send(302, "text/plain", "");
+  });
+  _server.on("/connecttest.txt", HTTP_GET, [this]() {
+    String ip = WiFi.softAPIP().toString();
+    _server.sendHeader("Location", "http://" + ip + "/", true);
     _server.send(302, "text/plain", "");
   });
   _server.on("/generate_204", HTTP_GET, [this]() {
-    _server.sendHeader("Location", "/", true);
+    String ip = WiFi.softAPIP().toString();
+    _server.sendHeader("Location", "http://" + ip + "/", true);
     _server.send(302, "text/plain", "");
   });
   _server.on("/fwlink", HTTP_GET, [this]() {
-    _server.sendHeader("Location", "/", true);
+    String ip = WiFi.softAPIP().toString();
+    _server.sendHeader("Location", "http://" + ip + "/", true);
     _server.send(302, "text/plain", "");
   });
   _server.on("/canonical.html", HTTP_GET, [this]() {
-    _server.sendHeader("Location", "/", true);
+    String ip = WiFi.softAPIP().toString();
+    _server.sendHeader("Location", "http://" + ip + "/", true);
     _server.send(302, "text/plain", "");
   });
   // Handle Apple captive portal checks
@@ -402,6 +464,7 @@ void WiFiManager::setupRoutes() {
   });
 
   _server.on("/list", HTTP_GET, [this]() {
+    WM_LOG("[WebServer] /list endpoint called");
     int n = WiFi.scanComplete();
     String json = "[";
 
@@ -451,7 +514,9 @@ void WiFiManager::setupRoutes() {
       return;
     }
     WM_LOGF("[WebServer] Redirecting %s to Portal\n", uri.c_str());
-    _server.sendHeader("Location", "/", true);
+    String ip = WiFi.softAPIP().toString();
+    _server.sendHeader("Location", "http://" + ip + "/", true);
+    _server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     _server.send(302, "text/plain", "");
   });
 }
@@ -465,13 +530,20 @@ void WiFiManager::wifiTask(void *pvParameters) {
 
   TickType_t lastScanTime = 0;
   unsigned long apStartTime = millis();
-  const unsigned long AP_TIMEOUT = WM_AP_TIMEOUT; // From WM_Config.h
+  const unsigned long AP_TIMEOUT = WM_DEFAULT_AP_TIMEOUT; // From WM_Config.h
 
   while (true) {
-    // Safe Restart Check
+    // Safe Restart Check (Manual via resetSettings)
     if (instance->_shouldRestart) {
       vTaskDelay(pdMS_TO_TICKS(2000));
       ESP.restart();
+    }
+
+    // Stop Portal Request (Automatic after connection success)
+    if (instance->_shouldStopPortal) {
+      vTaskDelay(pdMS_TO_TICKS(2000)); // Delay to let response finish
+      instance->stopPortal();
+      instance->_shouldStopPortal = false;
     }
 
     // Auto-AP Timeout (Configurable)
@@ -489,6 +561,14 @@ void WiFiManager::wifiTask(void *pvParameters) {
 
     // 1. Process Requests
     if (instance->_portalRunning) {
+      // Debug: Log connected clients periodically
+      static unsigned long lastClientCheck = 0;
+      if (millis() - lastClientCheck > 5000) {
+        int numClients = WiFi.softAPgetStationNum();
+        WM_LOGF("[WiFiManager] AP Clients Connected: %d \n", numClients);
+        lastClientCheck = millis();
+      }
+
       instance->_server.handleClient();
       if (instance->_userServer)
         instance->_userServer->handleClient();

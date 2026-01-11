@@ -27,11 +27,14 @@
 #define WM_LED_CONNECTING_INT 500 // Fast pulse while connecting
 #define WM_LED_CONNECTED_INT 3000 // Slow pulse heartbeat
 #define WM_LED_SLEEP_INT 5000     // Very slow pulse for Low Power state
-#define WM_AP_TIMEOUT 300000      // 5 Minutes (Power saving)
 
 // --- Advanced Settings ---
-#define WM_DEFAULT_RSSI_THRESHOLD -100
-#define WM_DEFAULT_AP_TIMEOUT WM_AP_TIMEOUT // Default to 5 mins
+#define WM_DEFAULT_RSSI_THRESHOLD -90
+#define WM_DEFAULT_AP_TIMEOUT 300000 // 5 Minutes (Power saving)
+#define WM_CONNECT_COOLDOWN_MS 1000  // Delay between connection attempts (ms)
+#define WM_CONNECT_TIMEOUT_MS 15000  // Max time to wait for connection (ms)
+#define WM_MAX_BOOT_RETRIES 3        // Number of full cycles to try before AP
+#define WM_BOOT_RETRY_DELAY_MS 5000  // Rest time between full cycles (ms)
 
 // --- RTC & NTP Settings ---
 #define WM_NTP_SERVER "pool.ntp.org"

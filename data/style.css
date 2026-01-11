@@ -55,12 +55,19 @@ body {
   padding: 0.8em;
   border-bottom: 1px solid #eee;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, border-left 0.2s ease;
   animation: slideIn 0.3s ease-out;
+  min-height: 48px; /* Better touch target for mobile */
+  border-left: 3px solid transparent;
 }
 
 .wifi-item:hover {
   background: #f9f9f9;
+}
+
+.wifi-item.selected {
+  background: #e8f4fd;
+  border-left-color: var(--primary-color);
 }
 
 .wifi-item:last-child {
@@ -88,6 +95,12 @@ body {
   transform: translateY(0);
 }
 
+.ui.button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
 input[type="text"],
 input[type="password"] {
   width: 100%;
@@ -96,6 +109,15 @@ input[type="password"] {
   border-radius: 0.28571429rem;
   box-sizing: border-box;
   margin-bottom: 1em;
+  font-size: 16px; /* Prevent zoom on iOS */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(33, 133, 208, 0.1);
 }
 
 @keyframes slideIn {

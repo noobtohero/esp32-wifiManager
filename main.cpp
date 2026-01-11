@@ -19,7 +19,7 @@ void setup() {
         Serial.printf("[APP] WiFi Sleep is now: %s\n", enabled ? "ON" : "OFF");
       })
       .begin(WM_DEFAULT_AP_NAME,
-             []() { Serial.println("เชื่อมต่อเน็ตสำเร็จแล้ว!"); });
+             []() { Serial.println("[MAIN] เชื่อมต่อเน็ตสำเร็จแล้ว!"); });
 }
 
 /*
