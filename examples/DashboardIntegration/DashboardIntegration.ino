@@ -37,7 +37,6 @@ void setup() {
   // This makes WiFiManager use YOUR server instance instead of starting its
   // own.
   wifiManager
-      .setStatusLED()       // Use built-in LED
       .useServer(&myServer) // <--- CRITICAL: Share the server instance
       .onConnected([]() {
         Serial.println("[APP] Dashboard is now online at http://" +

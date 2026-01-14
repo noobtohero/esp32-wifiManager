@@ -42,7 +42,7 @@ void setup() {
   // 3. Register with WiFiManager
   // Note: ArduinoOTA.begin() should be called AFTER WiFi is connected.
   // We use the onConnected callback for this.
-  wifiManager.setStatusLED()
+  wifiManager
       .useServer(&server)
       .onConnected([]() {
         ArduinoOTA.begin();
