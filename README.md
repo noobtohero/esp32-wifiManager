@@ -85,6 +85,7 @@ build_flags =
 
 void setup() {
     // เริ่มต้นแบบง่าย
+    Serial.begin(115200); // for DEBUG_MODE logs
     wifiManager.begin("MyESP32");
 }
 

@@ -9,8 +9,7 @@
 // 4. Low Energy ด้วย Modem Sleep
 
 void setup() {
-  Serial.begin(115200);
-  delay(2000);
+  Serial.begin(115200); // for DEBUG_MODE logs
   Serial.println("\n[APP] Booting...");
 
   // ท่าที่ "สั้นที่สุด" (One-Liner with Auto-LED)
