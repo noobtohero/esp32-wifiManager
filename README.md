@@ -1,6 +1,6 @@
 # ESP32 WiFi Manager (Plug-and-Play) 🚀
 
-**Latest Release:** `v0.2.0` (Smart Retry & Non-Blocking Workflow)
+**Latest Release:** `v0.2.1` (Hotfix: Begin LED, TimeSync)
 
 A high-performance, non-blocking WiFi Manager for ESP32.
 
@@ -67,16 +67,23 @@ WiFiManager เป็นไลบรารีที่ครบครันส�
 
 ## 🚀 Quick Start
 
+### platformio.ini
+
+```cpp
+lib_deps =
+    https://github.com/your-username/ESP32-WiFiManager.git
+
+build_flags = 
+    -DDEBUG_MODE ; enable debug mode, comment in production
+```
+
 ### Basic Usage
 
 ```cpp
 #include "WiFiManager.h"
 
-WiFiManager wifiManager;
 
 void setup() {
-    Serial.begin(115200);
-    
     // เริ่มต้นแบบง่าย
     wifiManager.begin("MyESP32");
 }
@@ -115,11 +122,11 @@ void setup() {
 // เริ่มต้นด้วย AP name
 bool begin(const char* apName);
 
-// เริ่มต้นพร้อม callback
-bool begin(const char* apName, SimpleCallback onConnect);
-
 // เริ่มต้นพร้อม password
 bool begin(const char* apName, const char* apPassword);
+
+// เริ่มต้นพร้อม callback
+bool begin(const char* apName, SimpleCallback onConnect);
 ```
 
 ### LED Configuration

@@ -28,9 +28,10 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
 
   WM_LOG("\n[WiFiManager] Starting...");
 
-  initTime();
-
   if (!_taskHandle) {
+    initTime();
+    if (_ledPin == -1)
+      setStatusLED();
     xTaskCreate(wifiTask, "wifi_task", 4096, this, 1, &_taskHandle);
   }
 

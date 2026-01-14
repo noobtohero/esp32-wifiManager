@@ -17,8 +17,7 @@
 #define LED_BUILTIN 2
 #endif
 
-#define WM_DEFAULT_LED_PIN LED_BUILTIN
-#define WM_DEFAULT_LED_INVERT false
+
 
 // --- Timing & Intervals (ms) ---
 #define WM_LED_PULSE_HOLD 150 // Duration LED stays ON during pulse
@@ -27,6 +26,7 @@
 #define WM_LED_CONNECTING_INT 500 // Fast pulse while connecting
 #define WM_LED_CONNECTED_INT 3000 // Slow pulse heartbeat
 #define WM_LED_SLEEP_INT 5000     // Very slow pulse for Low Power state
+#define WM_LED_INVERT false
 
 // --- Advanced Settings ---
 #define WM_DEFAULT_RSSI_THRESHOLD -90

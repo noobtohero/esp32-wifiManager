@@ -1,5 +1,6 @@
-#include "WiFiManager.h"
+#include "src/WiFiManager.h"
 #include <Arduino.h>
+#include <WiFiManager.h>
 
 // ตัวอย่างการใช้งาน ESP32 WiFi Manager แบบ Refactored
 // 1. แยกไฟล์ HTML/CSS ใน folder /data (อัปโหลดผ่าน LittleFS)
@@ -13,13 +14,7 @@ void setup() {
   Serial.println("\n[APP] Booting...");
 
   // ท่าที่ "สั้นที่สุด" (One-Liner with Auto-LED)
-  wifiManager
-      .setStatusLED() // ใช้ขามาตรฐาน (Pin 2) อัตโนมัติ
-      .onSleepChange([](bool enabled) {
-        Serial.printf("[APP] WiFi Sleep is now: %s\n", enabled ? "ON" : "OFF");
-      })
-      .begin(WM_DEFAULT_AP_NAME,
-             []() { Serial.println("[MAIN] เชื่อมต่อเน็ตสำเร็จแล้ว!"); });
+  wifiManager.begin("MyAP");
 }
 
 /*

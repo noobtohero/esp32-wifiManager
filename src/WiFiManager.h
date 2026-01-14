@@ -41,8 +41,8 @@ public:
   void clearSettings();
 
   // Status LED
-  WiFiManager &setStatusLED(int pin = WM_DEFAULT_LED_PIN,
-                            bool activeLow = WM_DEFAULT_LED_INVERT);
+  WiFiManager &setStatusLED(int pin = LED_BUILTIN,
+                            bool activeLow = WM_LED_INVERT);
   WiFiManager &setLEDActiveTime(int ms) {
     _ledPulseHold = ms;
     return *this;
