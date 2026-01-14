@@ -86,7 +86,8 @@ bool WiFiManager::begin(const char *apName, const char *apPassword) {
 
             prefs.end();
             prefs.begin("wifi-manager", false);
-            prefs.remove("conn_error");
+            if (prefs.isKey("conn_error"))
+              prefs.remove("conn_error");
             prefs.end();
 
             if (_statusCallback)
@@ -397,7 +398,8 @@ void WiFiManager::setupRoutes() {
         }
 
         // Clear any previous error
-        prefs.remove("conn_error");
+        if (prefs.isKey("conn_error"))
+          prefs.remove("conn_error");
         prefs.end();
 
         _server.send(200, "application/json", "{\"status\":\"connected\"}");
@@ -424,7 +426,8 @@ void WiFiManager::setupRoutes() {
     prefs.begin("wifi-manager", false); // Read-Write mode
     bool err = prefs.getBool("conn_error", false);
     if (err) {
-      prefs.remove("conn_error"); // Consume the error
+      if (prefs.isKey("conn_error"))
+        prefs.remove("conn_error"); // Consume the error
     }
     prefs.end();
     _server.send(200, "text/plain", err ? "true" : "false");
